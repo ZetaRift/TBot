@@ -55,7 +55,7 @@ irc.send('USER '+botnick+' '+botnick+' '+botnick+' :This is a fun bot!\n')
 irc.send('NICK '+botnick+'\n')
 join(homechan)
 
-while True:
+while True:    #This loops while the connection is active
    data = irc.recv ( 4096 )
    if data.find ( 'PING' ) != -1:
       irc.send ( 'PONG ' + data.split() [ 1 ] + '\r\n' )
@@ -98,7 +98,7 @@ while True:
       chan = GetChannel(data)
       nick = GetNick(data)
       quote = random.choice(open('quotes.txt', 'r').readlines())
-      if chan in (''):  #Define one or more channel here
+      if chan in (''):  #Define one or more channels here
          send(quote)
       else:
          sendno('!quote is not allowed')
