@@ -7,7 +7,7 @@ import time
 import random
 
 #NOTE: This only works best with Python 2.7 as of current
-#For !diabetes, !bestpony, !quote
+#For !diabetes, !bestpony, !quote, a file is needed as defined, otherwise define the filename yourself
 #Start of functions.
 
 def GetNick(data):     #get the nick
