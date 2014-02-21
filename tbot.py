@@ -8,6 +8,11 @@ import random
 import string
 
 #NOTE: This only works best with Python 2.7 as of current
+#In order for the bot to properly check the files in readAdmin and readChan, hostmasks and channels must be on the same
+#line on the .txt files, seperated by a space. Eg: #somechannel #thischannel
+#In order to add a command to return to a channel, a chan = GetChannel(data) must be defined in order for the bot to send to the target channel.
+#Contact Crimson_Tail on irc network PonyChat for more info about this bot
+#Will update this later with the core function changed slightly and a few more commands
 #Start of functions.
 
 def GetHost(host):
@@ -102,7 +107,7 @@ while True:
    if data.find ( 'PING' ) != -1:
       irc.send ( 'PONG ' + data.split() [ 1 ] + '\r\n' )
 
-   if data.find ( ':VERSION' ) != -1:
+   if data.find ( ':VERSION' ) != -1:  #Pretty much dosen't work properly, returns a VERSION
       nick = GetNick(data)
       irc.send ( 'NOTICE '+nick+' :VERSION :None of your beeswax\r\n')
 
@@ -120,17 +125,17 @@ while True:
    if action != 'none':
 
       if action == 'PRIVMSG':
-         if data.find('$') != -1:
+         if data.find('$') != -1:  #'$' is the bot's command prefix
             x = data.split('#')[1]
 	    x = x.split('$')[1]
             info = x.split(' ')
 	    info[0] = info[0].strip(' \t\n\r')
 #Start of commands
 
-	    if info[0] == 'hi':
-	       chan = GetChannel(data)
-	       nick = GetNick(data)
-	       irc.send('PRIVMSG '+chan+' :Hi there, '+nick+ '\r\n')
+#	    if info[0] == 'hi':   #Example command
+#	       chan = GetChannel(data)
+#	       nick = GetNick(data)
+#	       irc.send('PRIVMSG '+chan+' :Hi there, '+nick+ '\r\n')
 
             if info[0] == 'diabetes':
 	       chan = GetChannel(data)
