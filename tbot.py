@@ -15,7 +15,7 @@ def GetHost(host):
     host = host.split(' ')[0]
     return host
 
-def readAdmin(host):						# Return status 0/1
+def readAdmin(host):						#Reads a user's hostmask for staus 0/1
 	bestand = open('admins.txt', 'r')
 	for line in bestand:
 		if host in line:
@@ -25,7 +25,7 @@ def readAdmin(host):						# Return status 0/1
 			status = 0
 			return status
 
-def readChan(chan):
+def readChan(chan):						#Checks if a channel is lsited on allowedchan.txt for some commands
 	bestch = open('allowedchan.txt', 'r')
 	for line in bestch:
 		if chan in line:
