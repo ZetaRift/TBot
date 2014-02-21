@@ -20,7 +20,7 @@ def GetHost(host):
     host = host.split(' ')[0]
     return host
 
-def readAdmin(host):						#Reads a user's hostmask for staus 0/1
+def readAdmin(host):						# Return status 0/1
 	bestand = open('admins.txt', 'r')
 	for line in bestand:
 		if host in line:
@@ -30,7 +30,7 @@ def readAdmin(host):						#Reads a user's hostmask for staus 0/1
 			status = 0
 			return status
 
-def readChan(chan):						#Checks if a channel is lsited on allowedchan.txt for some commands
+def readChan(chan):
 	bestch = open('allowedchan.txt', 'r')
 	for line in bestch:
 		if chan in line:
@@ -94,7 +94,7 @@ print 'Attempting to connect to server..'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  #this is required to connect to irc
 irc.connect((server, 6667))
-irc.send('USER '+botnick+' '+botnick+' '+botnick+' :This is a fun bot!\n')
+irc.send('USER '+botnick+' '+botnick+' '+botnick+' :Insert bot here\n')
 irc.send('NICK '+botnick+'\n')
 time.sleep(2)
 join(homechan)
@@ -107,7 +107,7 @@ while True:
    if data.find ( 'PING' ) != -1:
       irc.send ( 'PONG ' + data.split() [ 1 ] + '\r\n' )
 
-   if data.find ( ':VERSION' ) != -1:  #Pretty much dosen't work properly, returns a VERSION
+   if data.find ( ':VERSION' ) != -1:
       nick = GetNick(data)
       irc.send ( 'NOTICE '+nick+' :VERSION :None of your beeswax\r\n')
 
@@ -125,22 +125,29 @@ while True:
    if action != 'none':
 
       if action == 'PRIVMSG':
-         if data.find('$') != -1:  #'$' is the bot's command prefix
+         if data.find('$') != -1:
             x = data.split('#')[1]
 	    x = x.split('$')[1]
-            info = x.split(' ')
+            info = x.split(' ', 1)
 	    info[0] = info[0].strip(' \t\n\r')
+            if len(info) > 1:
+
+               cmd, args = info[0], info[1]
+
+            else:
+
+               cmd, args = info[0], " "
 #Start of commands
 
-#	    if info[0] == 'hi':   #Example command
-#	       chan = GetChannel(data)
-#	       nick = GetNick(data)
-#	       irc.send('PRIVMSG '+chan+' :Hi there, '+nick+ '\r\n')
+	    if info[0] == 'hi':
+	       chan = GetChannel(data)
+	       nick = GetNick(data)
+	       send('Hi there, ' + nick)
 
             if info[0] == 'diabetes':
 	       chan = GetChannel(data)
 	       diabet = random.choice(open('diabetes.txt', 'r').readlines())
-	       irc.send('PRIVMSG '+chan+' :'+diabet+'\r\n')
+	       send(diabet)
 
 	    if info[0] == 'join':
 	       host = GetHost(data)
@@ -239,11 +246,60 @@ while True:
 	       nick = GetNick(data)
 	       chan = GetChannel(data)
 	       num = info[1]
-	       try:						#A try and except, so the bot dosen't crash on syntax error
+	       try:
 		  number = int(num)
 		  thingy = str(random.randrange(1, number))
 		  send(thingy)
 	       except:
 		  send("You're doing it wrong")
 
- 
+
+	    if info[0] == 'cycle':
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       nick = GetNick(data)
+	       if status == 1:
+		  chan = GetChannel(data)
+		  part(chan, 'Cycling channel..')
+		  time.sleep(1)  #Don't wanna flood the server >~>
+		  join(chan)
+	       else:
+		  sendno('Permission Denied (Your hostmask is not listed)')
+
+	    if info[0] == 'say':
+	       chan = GetChannel(data)
+	       nick = GetNick(data)
+	       send(args)
+
+	    if info[0] == 'debug.eval':
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       nick = GetNick(data)
+	       chan = GetChannel(data)
+	       if status == 1:
+		  try:
+		     send(eval(args))
+		  except:
+		     send('Nope')
+	       else:
+		  sendno('Permission Denied (Your hostmask is not listed)')
+
+	    if info[0] == 'google':
+	       chan = GetChannel(data)
+	       nick = GetNick(data)
+	       searcharg = str(args.replace(" ", "+"))
+	       searchlink = "http://www.lmgtfy.com/?q="+searcharg
+	       send(searchlink)
+
+	    if info[0] == 'calc':
+	       chan = GetChannel(data)
+	       send('This command is not safe to use')
+
+	    if info[0] == 'tempconv.cf':
+	       chan = GetChannel(data)
+	       try:
+	          con = int(info[1]) * 1.8
+	          conv = str(eval(str(con + 32)))
+	          send(conv)
+	       except:
+		  send("You're doing it wrong")
