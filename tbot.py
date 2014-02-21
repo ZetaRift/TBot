@@ -239,7 +239,7 @@ while True:
 	       nick = GetNick(data)
 	       chan = GetChannel(data)
 	       num = info[1]
-	       try:
+	       try:						#A try and except, so the bot dosen't crash on syntax error
 		  number = int(num)
 		  thingy = str(random.randrange(1, number))
 		  send(thingy)
