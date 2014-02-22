@@ -6,13 +6,9 @@ import os
 import time
 import random
 import string
+import filelist
 
 #NOTE: This only works best with Python 2.7 as of current
-#In order for the bot to properly check the files in readAdmin and readChan, hostmasks and channels must be on the same
-#line on the .txt files, seperated by a space. Eg: #somechannel #thischannel
-#In order to add a command to return to a channel, a chan = GetChannel(data) must be defined in order for the bot to send to the target channel.
-#Contact Crimson_Tail on irc network PonyChat for more info about this bot
-#Will update this later with the core function changed slightly and a few more commands
 #Start of functions.
 
 def GetHost(host):
@@ -89,6 +85,7 @@ botnick = 'Tbot' #bot's nick
 #some vars here
 
 greetswitch = 0
+silence = 0
 
 print 'Attempting to connect to server..'
 
@@ -140,14 +137,16 @@ while True:
 #Start of commands
 
 	    if info[0] == 'hi':
-	       chan = GetChannel(data)
-	       nick = GetNick(data)
-	       send('Hi there, ' + nick)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          nick = GetNick(data)
+	          send('Hi there, ' + nick)
 
             if info[0] == 'diabetes':
-	       chan = GetChannel(data)
-	       diabet = random.choice(open('diabetes.txt', 'r').readlines())
-	       send(diabet)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          diabet = random.choice(open('diabetes.txt', 'r').readlines())
+	          send(diabet)
 
 	    if info[0] == 'join':
 	       host = GetHost(data)
@@ -169,41 +168,45 @@ while True:
 		  sendno('Permission Denied (Your hostmask is not listed)')
 
 	    if info[0] == 'roulette':
-	       nick = GetNick(data)
-	       chan = GetChannel(data)
-	       roul = random.randint(1,7)
-	       if roul == 4:
-		  send('*boom*')
-		  kick(nick, 'Lost at roulette')
-	       elif roul == 7:
-		  send('Jammed')
-	       else:
-		  send('*click*')
+	       if silence == 0:
+	          nick = GetNick(data)
+	          chan = GetChannel(data)
+	          roul = random.randint(1,7)
+	          if roul == 4:
+		     send('*boom*')
+		     kick(nick, 'Lost at roulette')
+	          elif roul == 7:
+		     send('Jammed')
+	          else:
+		     send('*click*')
 
 	    if info[0] == 'bestpony':
-	       chan = GetChannel(data)
-	       bestpone = random.choice(open('bestpony.txt', 'r').readlines())
-	       send(bestpone)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          bestpone = random.choice(open('bestpony.txt', 'r').readlines())
+	          send(bestpone)
 
 	    if info[0] == 'quote':
-	       chan = GetChannel(data)
-	       cstatus = readChan(chan)
-	       nick = GetNick(data)
-	       if cstatus == 1:
-		  quote = random.choice(open('quotes.txt', 'r').readlines())
-		  send(quote)
-	       else:
-		  sendno('Quote is not allowed on ' + chan)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          cstatus = readChan(chan)
+	          nick = GetNick(data)
+	          if cstatus == 1:
+		     quote = random.choice(open('quotes.txt', 'r').readlines())
+		     send(quote)
+	          else:
+		     sendno('Quote is not allowed on ' + chan)
 
 	    if info[0] == 'sauce':
-	       chan = GetChannel(data)
-	       cstatus = readChan(chan)
-	       nick = GetNick(data)
-	       if cstatus == 1:
-		  sauce = random.choice(open('sauce.txt', 'r').readlines())
-		  send(sauce)
-	       else:
-		  sendno('Sauce is not allowed on ' + chan)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          cstatus = readChan(chan)
+	          nick = GetNick(data)
+	          if cstatus == 1:
+		     sauce = random.choice(open('sauce.txt', 'r').readlines())
+		     send(sauce)
+	          else:
+		     sendno('Sauce is not allowed on ' + chan)
 
 	    if info[0] == 'part':
 	       host = GetHost(data)
@@ -216,21 +219,24 @@ while True:
 		  sendno('Permission Denied (Your hostmask is not listed)')
 
 	    if info[0] == 'shiny':
-	       nick = GetNick(data)
-	       chan = GetChannel(data)
-	       shi = str(random.randint(1,8192))
-	       if shi == 8192:
-		  send('You got shiny!')
-	       else:
-		  send('Nope (' + shi + '/8192)')
+	       if silence == 0:
+	          nick = GetNick(data)
+	          chan = GetChannel(data)
+	          shi = str(random.randint(1,8192))
+	          if shi == 8192:
+		     send('You got shiny!')
+	          else:
+		     send('Nope (' + shi + '/8192)')
 
 	    if info[0] == 'shiny.info':
-	       chan = GetChannel(data)
-	       send('Chances of a shiny is 1 in 8192 (0.012207%)')
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          send('Chances of a shiny is 1 in 8192 (0.012207%)')
 
 	    if info[0] == 'ping':
-	       chan = GetChannel(data)
-	       send('Pong')
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          send('Pong')
 
 	    if info[0] == 'kick':
 	       host = GetHost(data)
@@ -243,15 +249,16 @@ while True:
 
 
 	    if info[0] == 'dice':
-	       nick = GetNick(data)
-	       chan = GetChannel(data)
-	       num = info[1]
-	       try:
-		  number = int(num)
-		  thingy = str(random.randrange(1, number))
-		  send(thingy)
-	       except:
-		  send("You're doing it wrong")
+	       if silence == 0:
+	          nick = GetNick(data)
+	          chan = GetChannel(data)
+	          num = info[1]
+	          try:
+		     number = int(num)
+		     thingy = str(random.randrange(1, number))
+		     send(thingy)
+	          except:
+		     send("You're doing it wrong")
 
 
 	    if info[0] == 'cycle':
@@ -267,9 +274,10 @@ while True:
 		  sendno('Permission Denied (Your hostmask is not listed)')
 
 	    if info[0] == 'say':
-	       chan = GetChannel(data)
-	       nick = GetNick(data)
-	       send(args)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          nick = GetNick(data)
+	          send(args)
 
 	    if info[0] == 'debug.eval':
 	       host = GetHost(data)
@@ -285,21 +293,54 @@ while True:
 		  sendno('Permission Denied (Your hostmask is not listed)')
 
 	    if info[0] == 'google':
-	       chan = GetChannel(data)
-	       nick = GetNick(data)
-	       searcharg = str(args.replace(" ", "+"))
-	       searchlink = "http://www.lmgtfy.com/?q="+searcharg
-	       send(searchlink)
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          nick = GetNick(data)
+	          searcharg = str(args.replace(" ", "+"))
+	          searchlink = "http://www.lmgtfy.com/?q="+searcharg
+	          send(searchlink)
 
 	    if info[0] == 'calc':
-	       chan = GetChannel(data)
-	       send('This command is not safe to use')
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          send('This command is not safe to use')
 
 	    if info[0] == 'tempconv.cf':
-	       chan = GetChannel(data)
-	       try:
-	          con = int(info[1]) * 1.8
-	          conv = str(eval(str(con + 32)))
-	          send(conv)
-	       except:
-		  send("You're doing it wrong")
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          try:
+	             con = int(info[1]) * 1.8
+	             conv = str(eval(str(con + 32)))
+	             send(conv)
+	          except:
+		     send("You're doing it wrong")
+
+	    if info[0] == 'quote.add':
+	       nick = GetNick(data)
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       if status == 1:
+		  try:
+		     filelist.write('quotes.txt', args)
+		  except:
+		     sendno('Nothing.')
+
+	    if info[0] == 'silence.on':
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       nick = GetNick(data)
+	       if status == 1:
+	          silence = 1
+	          sendno('Bot is now silenced')
+	       else:
+		  sendno('Permission Denied')
+
+	    if info[0] == 'silence.off':
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       nick = GetNick(data)
+	       if status == 1:
+	          silence = 0
+	          sendno('Silence disabled')
+	       else:
+		  sendno('Permission Denied (Your hostmask is not listed)')
