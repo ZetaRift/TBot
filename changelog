@@ -2,3 +2,4 @@
 0.1.5: added defs for getting a hostmask, channel, and nick. Works on multiple channels
 0.2: Changed core function completely, commands do not need a 'data.find' anymore 
 0.2.3: Updated core function, bot will read command arguments properly
+0.2.6: Added silence function(Does not apply to bot moderation commands)
