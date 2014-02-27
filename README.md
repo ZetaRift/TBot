@@ -1,5 +1,4 @@
 TBot
 ====
 
-A IRC bot coded in python
-
+An IRC bot coded in python
