@@ -7,6 +7,9 @@ import time
 import random
 import string
 import filelist
+import urllib2
+from BeautifulSoup import BeautifulSoup
+import settings
 
 #NOTE: This only works best with Python 2.7 as of current
 #Start of functions.
@@ -69,17 +72,28 @@ def quit(qmsg):
     irc.send('QUIT :'+qmsg+'\r\n')
 
 def act(action):
-    irc.send('PRIVMSG '+chan+ ' \001ACTION :' +action+'\r\n')
+    irc.send('PRIVMSG '+chan+' :ACTION '+action+'\r\n')
 
 
+def urlparse(url):
+    url = args
+    soup = BeautifulSoup(urllib2.urlopen(url))
+    title = soup.title.string
+    return title
+
+def BlackList(nick):						# Return status 0/1
+	bestand = open('blacklisted.txt', 'r')
+	for line in bestand:
+		if nick in line:
+			black = 1
+			return black
+		else:
+			black = 0
+			return black
     
 #end of functions
 
 #settings
-
-server = 'irc.ponychat.net'  #server address here
-homechan = '#pinchybot'  #home channel to join
-botnick = 'Tbot' #bot's nick
 
 
 #some vars here
@@ -90,11 +104,13 @@ silence = 0
 print 'Attempting to connect to server..'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  #this is required to connect to irc
-irc.connect((server, 6667))
-irc.send('USER '+botnick+' '+botnick+' '+botnick+' :Insert bot here\n')
-irc.send('NICK '+botnick+'\n')
+irc.connect((settings.server, 6667))
+irc.send('NICK '+settings.botnick+'\n')
+irc.send('USER '+settings.botnick+' '+settings.botnick+' '+settings.botnick+' :Insert bot here\n')
+
 time.sleep(2)
-join(homechan)
+irc.send('PRIVMSG NickServ :IDENTIFY '+settings.nspass+'\r\n')
+join(settings.homechan)
 
 while True:
    action = 'none'
@@ -137,9 +153,10 @@ while True:
 #Start of commands
 
 	    if info[0] == 'hi':
+	       nick = GetNick(data)
+               blist = BlackList(nick)
 	       if silence == 0:
 	          chan = GetChannel(data)
-	          nick = GetNick(data)
 	          send('Hi there, ' + nick)
 
             if info[0] == 'diabetes':
@@ -297,7 +314,7 @@ while True:
 	          chan = GetChannel(data)
 	          nick = GetNick(data)
 	          searcharg = str(args.replace(" ", "+"))
-	          searchlink = "http://www.lmgtfy.com/?q="+searcharg
+	          searchlink = "http://www.google.com/#q="+searcharg
 	          send(searchlink)
 
 	    if info[0] == 'calc':
@@ -344,3 +361,33 @@ while True:
 	          sendno('Silence disabled')
 	       else:
 		  sendno('Permission Denied (Your hostmask is not listed)')
+
+	    if info[0] == 'send.msg':
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       nick = GetNick(data)
+	       if status == 1:
+		  irc.send('PRIVMSG ' + args + '\r\n')
+	       else:
+		  sendno('Permission Denied (Your hostmask is not listed)')
+
+	    if info[0] == 'forceidentify':
+	       nick = GetNick(data)
+	       host = GetHost(data)
+	       status = readAdmin(host)
+	       if status == 1:
+		  irc.send('PRIVMSG NickServ :IDENTIFY '+nspass+'\r\n')
+	       else:
+		  sendno('Permission Denied (Your hostmask is not listed)')
+
+	    if info[0] == 'act':
+	       if silence == 0:
+	          chan = GetChannel(data)
+	          nick = GetNick(data)
+	          act(args)
+
+	    if info[0] == 'hug':
+	       if silence == 0:
+	          chan = GetChannel(data)
+		  nick = GetNick(data)
+		  act('hugs ' + nick)
