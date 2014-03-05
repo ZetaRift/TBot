@@ -10,6 +10,10 @@ import filelist
 import urllib2
 from BeautifulSoup import BeautifulSoup
 import settings
+import datetime
+import logging
+
+logging.basicConfig(filename='TBot.log',level=logging.DEBUG)
 
 #NOTE: This only works best with Python 2.7 as of current
 #Start of functions.
@@ -56,6 +60,9 @@ def GetChannel(data):     #This is needed to work on multiple channels
 def send(msg): #send to channel
     irc.send('PRIVMSG '+chan+' :'+msg+'\r\n')
 
+def sendre(rchan, rmsg): #send to channel
+    irc.send('PRIVMSG '+rchan+' :'+rmsg+'\r\n')
+
 def join(chan): #join a channel
     irc.send('JOIN '+chan+'\r\n')
 
@@ -76,9 +83,8 @@ def act(action):
 
 
 def urlparse(url):
-    url = args
     soup = BeautifulSoup(urllib2.urlopen(url))
-    title = soup.title.string
+    title = 'URL: '+ soup.title.string
     return title
 
 def BlackList(host):					# Return status 0/1
@@ -90,7 +96,17 @@ def BlackList(host):					# Return status 0/1
 	else:
 	    black = 0
 	    return black
+
+def Dice(side):
+    side1 = int(side)
+    die = str(random.randrange(1, side1))   #YOU MUST DIE
+    return die
     
+
+def restart_program():
+    python = sys.excutable
+    ox.execl(python, python, * sys.argv)
+
 #end of functions
 
 #settings
@@ -115,7 +131,10 @@ join(settings.homechan)
 while True:
    action = 'none'
    data = irc.recv ( 4096 )
-   print data
+   ts = time.time()
+   st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+   print ('[' + st + ']' + data)
+   logging.info('[' + st + ']' + data)
    
    if data.find ( 'PING' ) != -1:
       irc.send ( 'PONG ' + data.split() [ 1 ] + '\r\n' )
@@ -125,6 +144,8 @@ while True:
          nick = GetNick(data)
          chan = GetChannel(data)
          sendno('Hi there, ' + nick + ', and welcome to ' + chan)
+
+
 
 #Action check
 
@@ -140,9 +161,9 @@ while True:
    if action != 'none':
 
       if action == 'PRIVMSG':
-         if data.find('$') != -1:
+         if data.find('>') != -1:
             x = data.split('#')[1]
-	    x = x.split('$')[1]
+	    x = x.split('>')[1]
             info = x.split(' ', 1)
 	    info[0] = info[0].strip(' \t\n\r')
             if len(info) > 1:
@@ -208,17 +229,6 @@ while True:
 	             bestpone = random.choice(open('bestpony.txt', 'r').readlines())
 	             send(bestpone)
 
-	       if info[0] == 'quote':
-	          if silence == 0:
-	             chan = GetChannel(data)
-	             cstatus = readChan(chan)
-	             nick = GetNick(data)
-	             if cstatus == 1:
-		        quote = random.choice(open('quotes.txt', 'r').readlines())
-		        send(quote)
-	             else:
-		        sendno('Quote is not allowed on ' + chan)
-
 	       if info[0] == 'sauce':
 	          if silence == 0:
 	             chan = GetChannel(data)
@@ -270,19 +280,6 @@ while True:
 		     sendno('Permission Denied (Your hostmask is not listed)')
 
 
-	       if info[0] == 'dice':
-	          if silence == 0:
-	             nick = GetNick(data)
-	             chan = GetChannel(data)
-	             num = info[1]
-	             try:
-		        number = int(num)
-		        thingy = str(random.randrange(1, number))
-		        send(thingy)
-	             except:
-		        send("You're doing it wrong")
-
-
 	       if info[0] == 'cycle':
 	          host = GetHost(data)
 	          status = readAdmin(host)
@@ -290,7 +287,6 @@ while True:
 	          if status == 1:
 		     chan = GetChannel(data)
 		     part(chan, 'Cycling channel..')
-		     time.sleep(1)  #Don't wanna flood the server >~>
 		     join(chan)
 	          else:
 		     sendno('Permission Denied (Your hostmask is not listed)')
@@ -301,7 +297,7 @@ while True:
 	             nick = GetNick(data)
 	             send(args)
 
-	       if info[0] == 'debug.eval':
+	       if info[0] == 'eval':
 	          host = GetHost(data)
 	          status = readAdmin(host)
 	          nick = GetNick(data)
@@ -309,6 +305,12 @@ while True:
 	          if status == 1:
 		     try:
 		        send(eval(args))
+		     except NameError:
+		        send('Nope(NameError)')
+		     except SyntaxError:
+		        send('Nope(SyntaxError)')
+		     except TypeError:
+		        send('Nope(SyntaxError)')
 		     except:
 		        send('Nope')
 	          else:
@@ -416,5 +418,97 @@ while True:
 		     sendno("You ain't blacklisted, yo")
 	          else:
 		     sendno("You're blacklisted")
+
+	       if info[0] == 'dice':
+	          if silence == 0:
+	             nick = GetNick(data)
+	             chan = GetChannel(data)
+	             num = info[1]
+	             try:
+		        number = int(num)
+		        thingy = str(random.randrange(1, number))
+		        send(thingy)
+	             except:
+		        send("You're doing it wrong")
+
+	       if info[0] == 'url.title':
+		  if silence == 0:
+		     try:
+		        chan = GetChannel(data)
+		        urltitle = urlparse(args)
+		        send(urltitle)
+		     except:
+			send('URL be broken?')
+
+
+	       if info[0] == 'remote.say':
+	          host = GetHost(data)
+	          chan = GetChannel(data)
+	          status = readAdmin(host)
+		  if status == 1:
+		     irc.send('PRIVMSG '+args+'\r\n')
+		  else:
+		     sendno("Permission Denied (Your hostmask is not listed)")
+
+	       if info[0] == 'exec':
+	          host = GetHost(data)
+	          status = readAdmin(host)
+	          nick = GetNick(data)
+	          chan = GetChannel(data)
+	          if status == 1:
+		     try:
+		        exec args
+		     except:
+		        send('No work')
+	          else:
+		     sendno('Permission Denied (Your hostmask is not listed)')
+
+	       if info[0] == 'restart':
+	          host = GetHost(data)
+	          status = readAdmin(host)
+	          nick = GetNick(data)
+	          if status == 1:
+	             quit('Restart by owner')
+		     os.execl('./tbot.py', '1')
+	          else:
+		     sendno('Permission Denied (Your hostmask is not listed)')
+
+	       if info[0] == 'hitme':
+		  chan = GetChannel(data)
+		  nick = GetNick(data)
+                  rand = ['pony', 'derp', 'banhammer', 'bat', 'random object']
+		  act('hits ' + nick + ' with a ' +random.choice(rand))
+
+	       if info[0] == 'roll.2':
+		  chan = GetChannel(data)
+		  di1 = str(random.randrange(0, 9))
+		  di2 = str(random.randrange(0, 9))
+		  dic = eval(str(di1 + di2))
+		  send('You rolled: ' + di1 +' '+ di2)
+
+	       if info[0] == 'roll.3':
+		  chan = GetChannel(data)
+		  di1 = str(random.randrange(0, 9))
+		  di2 = str(random.randrange(0, 9))
+		  di3 = str(random.randrange(0, 9))
+		  send('You rolled: ' + di1 +' '+ di2 +' '+ di3)
+
+	       if info[0] == 'pokedex':
+	          if silence == 0:
+	             chan = GetChannel(data)
+	             nick = GetNick(data)
+		     num = info[1]
+	             link = "http://www.psypokes.com/dex/psydex/"+num
+	             send(link)
+
+	       if info[0] == 'flipcoin':
+		  chan = GetChannel(data)
+                  rand = ['Heads', 'Tails']
+		  send(random.choice(rand))
+
+	       if info[0] == '8-ball':
+		  chan = GetChannel(data)
+                  rand = ['Yes', 'No', 'Outlook so so', 'Absolutely', 'My sources say no', 'Yes definitely', 'Very doubtful', 'Most likely', 'Forget about it', 'Are you kidding?', 'Go for it', 'Not now', 'Looking good', 'Who knows', 'A definite yes', 'You will have to wait', 'Yes, in my due time', 'I have my doubts']
+		  send(random.choice(rand))
 	    else:
 	       sendno("You're blacklisted, sorry")
