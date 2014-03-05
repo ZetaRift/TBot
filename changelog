@@ -5,3 +5,4 @@
 0.2.6: Added silence function(Does not apply to bot moderation commands)
 0.2.8: Added blacklist function (Does not work yet)
 0.3.0: Blacklist now works
+0.3.1: Added logging function, will make log switch
