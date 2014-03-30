@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/bin/python2.7
 
 import socket
 import sys
@@ -6,14 +6,19 @@ import os
 import time
 import random
 import string
-import filelist
-import urllib2
-from BeautifulSoup import BeautifulSoup
 import settings
 import datetime
 import logging
+import goslate
+from random import randint
+import urllib2
+import json
+from xml.dom import minidom
 
 logging.basicConfig(filename='TBot.log',level=logging.DEBUG)
+
+
+
 
 #NOTE: This only works best with Python 2.7 as of current
 #Start of functions.
@@ -103,9 +108,117 @@ def Dice(side):
     return die
     
 
+def roll(sides, count):
+    r1 = str([randint(1, sides) for i in range(count)])
+    r2 = r1.strip("[]")
+    return r2
+
+
 def restart_program():
     python = sys.excutable
     ox.execl(python, python, * sys.argv)
+
+def slate(tran, lang):
+    gs = goslate.Goslate()
+    tr = gs.translate(tran, lang)
+    tr2 = tr.encode('utf8', 'ignore')
+    trf = tr2.decode('utf8', 'ignore')
+    return tr2
+
+
+def derpi_img_score(num_id):    #Get score
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    score = str(jso['score'])
+    return score
+
+def derpi_img_upvote(num_id):    #Get score
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    upv = jso['upvotes']
+    return upv
+
+def derpi_img_downvote(num_id):    #Get score
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    upd = jso['downvotes']
+    return upd
+
+def derpi_img_uled(num_id): #Who uploaded the image
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    uploader = jso['uploader']
+    return uploader
+
+def derpi_img_tagged(num_id): #Tags on a image
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    tags = jso['tags']
+    return tags
+
+def derpi_img_cmts(num_id):  #Comment count of image
+    url = urllib2.urlopen('https://derpiboo.ru/'+num_id+'.json')
+    jso = json.load(url)
+    cmts = jso['comment_count']
+    return cmts
+
+
+def derpi_tagsearch(tag):
+    ser1 = str(tag.replace(" ", "+"))
+    url = urllib2.urlopen("https://derpiboo.ru/tags/"+ser1+".json")
+    jso = json.load(url)
+    img_count = jso['tag']['images']
+    return img_count
+
+def saysw(switch):
+    if switch == 'on':
+       echo = 0
+    elif switch == 'mod':
+       echo = 1
+    elif switch == 'off':
+       echo = 2
+    else:
+       syn = "Syntax: echo(on|mod|off)"
+       return syn
+
+def dexname(name):
+    xmldoc = minidom.parse("dex_xml/"+name+'.xml')
+    dexname = xmldoc.getElementsByTagName('dexname')
+    num = xmldoc.getElementsByTagName('num')
+    typ = xmldoc.getElementsByTagName('typ') 
+    hp = xmldoc.getElementsByTagName('hp') 
+    atk = xmldoc.getElementsByTagName('atk')
+    defe = xmldoc.getElementsByTagName('def')
+    spa = xmldoc.getElementsByTagName('spa')
+    spd = xmldoc.getElementsByTagName('spd')
+    spe = xmldoc.getElementsByTagName('spe')
+    tot = xmldoc.getElementsByTagName('tot')
+    name = dexname[0].attributes['name'].value
+    num = num[0].attributes['name'].value
+    typ = typ[0].attributes['name'].value
+    hp = hp[0].attributes['name'].value
+    atk = atk[0].attributes['name'].value
+    defe = defe[0].attributes['name'].value
+    spa = spa[0].attributes['name'].value
+    spd = spd[0].attributes['name'].value
+    spe = spe[0].attributes['name'].value
+    tot = tot[0].attributes['name'].value
+    res = "Name: "+str(name)+" | Dex No: "+str(num)+" | Type: "+str(typ)+" | Health: "+str(hp)+" | Attack: "+str(atk)+" | Defense: "+str(defe)+" | Special Atk: "+str(spa)+" | Special Def: "+str(spd)+" | Speed: "+str(spe)+" | Total: "+str(tot)
+    return res
+
+def tempconv(pfix, value):
+    if pfix == 'cf':
+       tmp = value * 1.8 + 32
+       return str(float(tmp))
+    elif pfix == 'fc':
+       tmp = (value - 32) * 5 / 9
+       return str(float(tmp))
+    elif pfix == 'ck':
+       tmp = value + 273.15
+       return str(float(tmp))
+    elif pfix == 'kc':
+       tmp = value - 273.15
+       return str(float(tmp))
 
 #end of functions
 
@@ -116,6 +229,8 @@ def restart_program():
 
 greetswitch = 0
 silence = 0
+logsw = 0
+echo = 0
 
 print 'Attempting to connect to server..'
 
@@ -127,6 +242,7 @@ irc.send('USER '+settings.botnick+' '+settings.botnick+' '+settings.botnick+' :I
 time.sleep(2)
 irc.send('PRIVMSG NickServ :IDENTIFY '+settings.nspass+'\r\n')
 join(settings.homechan)
+parsedata = 1
 
 while True:
    action = 'none'
@@ -134,7 +250,8 @@ while True:
    ts = time.time()
    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
    print ('[' + st + ']' + data)
-   logging.info('[' + st + ']' + data)
+   if logsw == 1:
+      logging.info('[' + st + '] ' + data)
    
    if data.find ( 'PING' ) != -1:
       irc.send ( 'PONG ' + data.split() [ 1 ] + '\r\n' )
@@ -144,6 +261,10 @@ while True:
          nick = GetNick(data)
          chan = GetChannel(data)
          sendno('Hi there, ' + nick + ', and welcome to ' + chan)
+
+   if data.find ( ':VERSION' ) != -1:
+      nick = GetNick(data)
+      sendno("VERSION TBot 0.68")
 
 
 
@@ -161,9 +282,9 @@ while True:
    if action != 'none':
 
       if action == 'PRIVMSG':
-         if data.find('>') != -1:
+         if data.find('$') != -1:
             x = data.split('#')[1]
-	    x = x.split('>')[1]
+	    x = x.split('$')[1]
             info = x.split(' ', 1)
 	    info[0] = info[0].strip(' \t\n\r')
             if len(info) > 1:
@@ -292,10 +413,22 @@ while True:
 		     sendno('Permission Denied (Your hostmask is not listed)')
 
 	       if info[0] == 'say':
-	          if silence == 0:
+	          if echo == 0:
 	             chan = GetChannel(data)
 	             nick = GetNick(data)
 	             send(args)
+                  elif echo == 1:
+                     status = readAdmin(host)
+                     if status == 1:
+                        chan = GetChannel(data)
+	                nick = GetNick(data)
+	                send(args)
+                     else:
+                        nick = GetNick(data)
+                        sendno("$say command is limited to bot admin")
+		  elif echo == 2:
+                     nick = GetNick(data)
+                     sendno("$say command is disabled.")
 
 	       if info[0] == 'eval':
 	          host = GetHost(data)
@@ -305,12 +438,8 @@ while True:
 	          if status == 1:
 		     try:
 		        send(eval(args))
-		     except NameError:
-		        send('Nope(NameError)')
-		     except SyntaxError:
-		        send('Nope(SyntaxError)')
-		     except TypeError:
-		        send('Nope(SyntaxError)')
+		     except Exception as err:
+		        send("Err: " + str(err))
 		     except:
 		        send('Nope')
 	          else:
@@ -333,9 +462,26 @@ while True:
 	          if silence == 0:
 	             chan = GetChannel(data)
 	             try:
-	                con = int(info[1]) * 1.8
-	                conv = str(eval(str(con + 32)))
-	                send(conv)
+	                con = int(float(info[1])) * 1.8 + 32
+	                send(str(con))
+	             except:
+		        send("You're doing it wrong")
+
+	       if info[0] == 'tempconv.ck':
+	          if silence == 0:
+	             chan = GetChannel(data)
+	             try:
+	                con = int(float(info[1])) + 273.15
+	                send(str(con))
+	             except:
+		        send("You're doing it wrong")
+
+	       if info[0] == 'tempconv.kc':
+	          if silence == 0:
+	             chan = GetChannel(data)
+	             try:
+	                con = int(float(info[1])) - 273.15
+	                send(str(con))
 	             except:
 		        send("You're doing it wrong")
 
@@ -468,6 +614,7 @@ while True:
 	          status = readAdmin(host)
 	          nick = GetNick(data)
 	          if status == 1:
+		     logging.warning('Restart command was used, restarting script...')
 	             quit('Restart by owner')
 		     os.execl('./tbot.py', '1')
 	          else:
@@ -510,5 +657,92 @@ while True:
 		  chan = GetChannel(data)
                   rand = ['Yes', 'No', 'Outlook so so', 'Absolutely', 'My sources say no', 'Yes definitely', 'Very doubtful', 'Most likely', 'Forget about it', 'Are you kidding?', 'Go for it', 'Not now', 'Looking good', 'Who knows', 'A definite yes', 'You will have to wait', 'Yes, in my due time', 'I have my doubts']
 		  send(random.choice(rand))
+
+	       if info[0] == 'log.on':
+	          host = GetHost(data)
+	          status = readAdmin(host)
+	          nick = GetNick(data)
+	          if status == 1:
+	             logsw = 1
+	             sendno('Bot is now logging to file')
+	          else:
+		     sendno('Permission Denied')
+
+	       if info[0] == 'log.off':
+	          host = GetHost(data)
+	          status = readAdmin(host)
+	          nick = GetNick(data)
+	          if status == 1:
+	             logsw = 0
+	             sendno('Bot has stopped logging to file')
+	          else:
+		     sendno('Permission Denied')
+
+               if info[0] == 'goslate.de':  #German
+                  chan = GetChannel(data)
+                  trans = slate(args, 'de')
+                  send(trans)
+
+               if info[0] == 'goslate.ru':  #Russian
+                  chan = GetChannel(data)
+                  trans = slate(args, 'ru')
+                  send(trans)
+
+               if info[0] == 'goslate.ja': #Japanese
+                  chan = GetChannel(data)
+                  trans = slate(args, 'ja')
+                  send(trans)
+
+               if info[0] == 'goslate.fi':  #Finnish
+                  chan = GetChannel(data)
+                  trans = slate(args, 'fi')
+                  send(trans)
+
+               if info[0] == 'goslate.ko': #Korean
+                  chan = GetChannel(data)
+                  trans = slate(args, 'ko')
+                  send(trans)
+
+               if info[0] == 'goslate.uk': #Ukrainian
+                  chan = GetChannel(data)
+                  trans = slate(args, 'uk')
+                  send(trans)
+
+               if info[0] == 'goslate.es': #Spanish
+                  chan = GetChannel(data)
+                  trans = slate(args, 'es')
+                  send(trans)
+
+               if info[0] == 'goslate.ar': #Arabic
+                  chan = GetChannel(data)
+                  trans = slate(args, 'ar')
+                  send(trans)
+
+               if info[0] == 'goslate.zh-CN': #Chinese Simple
+                  chan = GetChannel(data)
+                  trans = slate(args, 'zh-CN')
+                  send(trans)
+
+               if info[0] == 'goslate.zh-TW': #Chinese Traditional
+                  chan = GetChannel(data)
+                  trans = slate(args, 'zh-TW')
+                  send(trans)
+
+               if info[0] == 'goslate.fr': #French
+                  chan = GetChannel(data)
+                  trans = slate(args, 'fr')
+                  send(trans)
+
+
+
+	       if info[0] == 'reverse':
+                  chan = GetChannel(data)
+                  rr = args[::-1]
+                  irc.send('PRIVMSG '+chan+' :'+rr+'\r\n')
+
+               if info[0] == 'lines':
+                  chan = GetChannel(data)
+                  lct = str(len(open('tbot.py').readlines()))
+                  send("It takes " + lct + " lines to run this bot!")
 	    else:
 	       sendno("You're blacklisted, sorry")
